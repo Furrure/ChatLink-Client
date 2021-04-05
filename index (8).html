@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300&display=swap" rel="stylesheet">
+<style type="text/css">
+    body{
+        background-color: lightgray;
+    }
+    #title{
+        margin:auto;
+        background: darkgrey;
+        color:black;
+        font-size: 3rem;
+        text-align: center;
+        border:  1rem solid black;
+        border-bottom: 1rem solid black;
+        padding: 0.25rem;
+        font-family: 'Noto Sans JP', sans-serif;
+
+    }
+    #chat{
+        font-family: 'Noto Sans JP', sans-serif;
+        overflow: auto;
+        height: 45vh;
+        margin:auto;
+        padding: 1rem;
+        border:1rem solid black;
+        border-top: 0rem solid black;
+        background-color: darkgrey;
+    }
+    #send{
+        font-family: 'Noto Sans JP', sans-serif;
+        display: block;
+        margin : 0 auto;
+    }
+    #message{
+        font-family: 'Noto Sans JP', sans-serif;
+        margin:auto;
+        display: block;
+        margin : 0 auto;
+    }
+    #passkey{
+        text-align:center;
+        font-family: 'Noto Sans JP', sans-serif;
+        display: block;
+        margin : 0 auto;
+    }
+    #passMSG{
+        text-align: center;
+    }
+    p, input {
+        font-family: 'Noto Sans JP', sans-serif;
+    }
+    #emoji-btns {
+        border: 0.25rem solid black;
+        padding: 0.15rem;
+        background-color: darkgrey;
+        width: fit-content;
+    }
+</style>
+
+<title>ChatLink</title>
+</head>
+<h1 id="title">Chat Link</h1>
+<div id="chat"></div><br>
+<input type="button" value="Emoji", onclick="toggleDiv('emoji-btns')">
+<div id="emoji-btns">
+    <!--emojis: make the parameters for sendEmoji the button id and the value their respective emoji-->
+    <input type="button" id="sunglasses" value="&#128526;", onclick="sendEmoji('sunglasses')">
+    <input type="button" id="crying" value="&#x1f622;", onclick="sendEmoji('crying')">
+    <input type="button" id="angry" value="&#128544;", onclick="sendEmoji('angry')">
+    <input type="button" id="confused" value="&#128533;", onclick="sendEmoji('confused')">
+    <input type="button" id="smile" value="&#128516;", onclick="sendEmoji('smile')">
+    <input type="button" id="rofl" value="&#129315;", onclick="sendEmoji('rofl')">
+</div><br>
+<input type="text" id="message" width="1000" autocomplete="off">
+<input type="button" id="send" value="Send", onclick="messageSend()">
+<p id="passMSG">Put your passkey here: </p><input type="password" id="passkey" width="1000">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+    var cachedMessages = ""
+    //is hidden by default
+    $("#chat").hide();
+    $("#emoji-btns").hide();
+    //message updating
+    setInterval(() => {
+        fetch("http://sserve.cc:85/messages", {
+			method: "GET",
+			headers: {
+				'passkey': $("#passkey").val()
+			}
+        }).then(res => res.text()).then(res => {
+            if(cachedMessages==res){
+                if(cachedMessages == "")throw validationError;
+                return;
+            }else{
+                $("#chat").html(res)
+                $('#chat').scrollTop($('#chat')[0].scrollHeight);
+                cachedMessages=res
+                $("#passMSG").html("Put your passkey here: ");
+            }
+        }).catch(() => {
+            $("#passMSG").html("Put your passkey here: <br>Please enter a valid passkey!");
+            $("#title").html("")
+        });
+        $("#chat").show();
+        //the :empty is shorthand for if(chat is empty)
+        $("#chat:empty").hide();
+    }, 1000);
+    //send message
+    function messageSend(){
+        let message = $("#message").val();
+        if(!message)return
+        fetch("http://sserve.cc:85/message",{
+            method:"PUT",
+            headers:{
+                "Content-type":"text/plain",
+                "passkey": $("#passkey").val(),
+            },
+            body: $("#message").val(),
+        });
+        $("#message").val("");
+    }
+     //emojis
+    function sendEmoji(emoji){
+        $("#message").val($("#message").val()+" "+$(`#${emoji}`).val());
+    }
+    //toggle div visibility
+    function toggleDiv(id){
+        $(`#${id}`).toggle();
+    }
+    //enter support
+	$(document).keypress(function(e){
+    if (e.which == 13){
+        $("#send").click();
+    }
+});
+</script>
+</html>
